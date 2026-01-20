@@ -64,9 +64,65 @@ Create `~/.chibi/xmpp-mappings.json`:
 
 If no mapping exists, JIDs are sanitized to context names (e.g., `alice@example.org` becomes `alice_at_example_org`).
 
-### 5. Run mcabber
+### 5. Run mcabber as a systemd service
 
-Start mcabber in a persistent session:
+Create a systemd user service file at `~/.config/systemd/user/mcabber.service`:
+
+```ini
+[Unit]
+Description=mcabber XMPP client for chibi
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStartPre=/bin/mkdir -p %h/.mcabber /tmp/mcabber-events
+ExecStartPre=/bin/bash -c 'test -p %h/.mcabber/mcabber.fifo || mkfifo %h/.mcabber/mcabber.fifo'
+# mcabber is a TUI app - use 'script' to provide a pseudo-terminal
+ExecStart=/usr/bin/script -q -c /usr/bin/mcabber /dev/null
+Restart=on-failure
+RestartSec=10
+
+Environment=HOME=%h
+Environment=TERM=dumb
+
+[Install]
+WantedBy=default.target
+```
+
+Note: mcabber is a TUI application. The `script` command provides the pseudo-terminal it needs to run headlessly.
+
+Enable and start the service:
+
+```bash
+# Create the directory if needed
+mkdir -p ~/.config/systemd/user
+
+# Reload systemd to pick up the new service
+systemctl --user daemon-reload
+
+# Enable the service to start on login
+systemctl --user enable mcabber
+
+# Start the service now
+systemctl --user start mcabber
+
+# Check status
+systemctl --user status mcabber
+
+# View logs
+journalctl --user -u mcabber -f
+```
+
+To ensure the service runs even when you're not logged in:
+
+```bash
+sudo loginctl enable-linger $USER
+```
+
+**Alternative: tmux**
+
+If you prefer tmux over systemd:
 
 ```bash
 tmux new-session -d -s mcabber 'mcabber'
