@@ -33,11 +33,36 @@ cargo build --release
 cp target/release/hello_chibi ~/.chibi/plugins/
 ```
 
-### 3. Configure mcabber
+### 3. Configure hello_chibi
+
+Create `~/.chibi/hello_chibi.toml`:
+
+```toml
+chibi_path = "/home/youruser/projects/chibi/target/release/chibi"
+mcabber_fifo = "/home/youruser/.mcabber/mcabber.fifo"
+
+[mappings]
+"alice@example.org" = "alice-chat"
+"bob@example.org" = "bob-assistant"
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `chibi_path` | **Yes** | Absolute path to the chibi binary |
+| `mcabber_fifo` | No | Path to mcabber's FIFO (default: `~/.mcabber/mcabber.fifo`) |
+| `mappings` | No | JID to context name mappings |
+
+If no mapping exists for a JID, it's sanitized to a context name (e.g., `alice@example.org` becomes `alice_at_example_org`).
+
+### 4. Configure mcabber
 
 Add to `~/.mcabber/mcabberrc`:
 
 ```
+set jid = yourbot@yourserver.org
+set password = your-password
+set server = yourserver.org
+
 set events_command = ~/.chibi/plugins/hello_chibi
 set event_log_files = 1
 set event_log_dir = /tmp/mcabber-events
@@ -49,20 +74,6 @@ Create the event log directory:
 ```bash
 mkdir -p /tmp/mcabber-events
 ```
-
-### 4. (Optional) Configure JID to context mappings
-
-Create `~/.chibi/xmpp-mappings.json`:
-
-```json
-{
-  "alice@example.org": "alice-chat",
-  "bob@example.org": "bob-assistant",
-  "team@conference.example.org": "team-room"
-}
-```
-
-If no mapping exists, JIDs are sanitized to context names (e.g., `alice@example.org` becomes `alice_at_example_org`).
 
 ### 5. Run mcabber as a systemd service
 

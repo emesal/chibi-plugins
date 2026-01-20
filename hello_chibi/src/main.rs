@@ -9,6 +9,17 @@ use std::process::{Command, ExitCode};
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
+/// Plugin configuration loaded from ~/.chibi/hello_chibi.json
+#[derive(Deserialize, Default)]
+struct Config {
+    /// Path to the chibi binary (required)
+    chibi_path: Option<String>,
+    /// Path to mcabber's FIFO (default: ~/.mcabber/mcabber.fifo)
+    mcabber_fifo: Option<String>,
+    /// JID to context mappings (alternative to xmpp-mappings.json)
+    mappings: Option<HashMap<String, String>>,
+}
+
 /// Inbox entry matching chibi's expected format
 #[derive(Serialize, Deserialize)]
 struct InboxEntry {
@@ -50,18 +61,60 @@ fn chibi_dir() -> PathBuf {
         .join(".chibi")
 }
 
+fn config_file() -> PathBuf {
+    chibi_dir().join("hello_chibi.toml")
+}
+
+fn load_config() -> Config {
+    if let Ok(content) = fs::read_to_string(config_file()) {
+        toml::from_str(&content).unwrap_or_default()
+    } else {
+        Config::default()
+    }
+}
+
+fn chibi_path() -> Result<PathBuf, String> {
+    let config = load_config();
+    match config.chibi_path {
+        Some(path) => {
+            let path = PathBuf::from(path);
+            if path.exists() {
+                Ok(path)
+            } else {
+                Err(format!("chibi binary not found at configured path: {}", path.display()))
+            }
+        }
+        None => Err(format!(
+            "chibi_path not configured. Create {} with: chibi_path = \"/path/to/chibi\"",
+            config_file().display()
+        )),
+    }
+}
+
 fn mcabber_fifo() -> PathBuf {
-    dirs::home_dir()
-        .expect("Could not find home directory")
-        .join(".mcabber/mcabber.fifo")
+    let config = load_config();
+    match config.mcabber_fifo {
+        Some(path) => PathBuf::from(path),
+        None => dirs::home_dir()
+            .expect("Could not find home directory")
+            .join(".mcabber/mcabber.fifo"),
+    }
 }
 
 fn mappings_file() -> PathBuf {
     chibi_dir().join("xmpp-mappings.json")
 }
 
-/// Load JID -> context mappings from config file
+/// Load JID -> context mappings from config file or hello_chibi.json
 fn load_mappings() -> HashMap<String, String> {
+    // First check hello_chibi.json for mappings
+    let config = load_config();
+    if let Some(mappings) = config.mappings {
+        if !mappings.is_empty() {
+            return mappings;
+        }
+    }
+    // Fall back to xmpp-mappings.json
     if let Ok(content) = fs::read_to_string(mappings_file()) {
         serde_json::from_str(&content).unwrap_or_default()
     } else {
@@ -267,9 +320,23 @@ fn handle_eventcmd(args: &[String]) -> ExitCode {
         return ExitCode::FAILURE;
     }
 
+    // Get chibi path from config
+    let chibi = match chibi_path() {
+        Ok(path) => path,
+        Err(e) => {
+            eprintln!("{}", e);
+            return ExitCode::FAILURE;
+        }
+    };
+
     // Trigger chibi to process the inbox
-    let status = Command::new("chibi")
-        .args(["-c", &context, "You have received a new XMPP message. Check your inbox."])
+    // Use -S (sub-context) to run in the target context without changing global state
+    let prompt = format!(
+        "You have received an XMPP message from {}. Check your inbox and reply using xmpp_send(to=\"{}\", message=\"your reply\").",
+        jid, jid
+    );
+    let status = Command::new(&chibi)
+        .args(["-S", &context, &prompt])
         .status();
 
     match status {
@@ -279,7 +346,7 @@ fn handle_eventcmd(args: &[String]) -> ExitCode {
             ExitCode::FAILURE
         }
         Err(e) => {
-            eprintln!("Failed to run chibi: {}", e);
+            eprintln!("Failed to run chibi at {}: {}", chibi.display(), e);
             ExitCode::FAILURE
         }
     }
