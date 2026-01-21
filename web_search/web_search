@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.10"
 # dependencies = [
-#     "duckduckgo-search",
+#     "ddgs",
 # ]
 # ///
 """
@@ -45,7 +45,7 @@ if not query:
     print("Error: query parameter is required", file=sys.stderr)
     sys.exit(1)
 
-from duckduckgo_search import DDGS
+from ddgs import DDGS
 
 try:
     with DDGS() as ddgs:
