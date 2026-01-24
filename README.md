@@ -50,4 +50,4 @@ cp target/release/hello_chibi ~/.chibi/plugins/
 
 ## Writing plugins
 
-See [chibi's CLAUDE.md](https://github.com/emesal/chibi/blob/main/CLAUDE.md) for the plugin API documentation.
+See [chibi's](https://github.com/emesal/chibi/) documentation on [plugins](https://github.com/emesal/chibi/blob/main/docs/plugins.md) and [hooks](https://github.com/emesal/chibi/blob/main/docs/hooks.md) for more information.
