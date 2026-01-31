@@ -24,7 +24,6 @@ if [[ "$1" == "--schema" ]]; then
     "post_message",
     "pre_tool",
     "post_tool",
-    "on_context_switch",
     "pre_clear",
     "post_clear",
     "pre_compact",
