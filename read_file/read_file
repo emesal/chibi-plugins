@@ -21,8 +21,8 @@ EOF
   exit 0
 fi
 
-# Read args from env var
-path=$(echo "$CHIBI_TOOL_ARGS" | jq -r '.path')
+# Read args from stdin
+path=$(jq -r '.path' < /dev/stdin)
 
 if [[ -z "$path" || "$path" == "null" ]]; then
   echo "Error: path parameter is required" >&2

@@ -46,10 +46,11 @@ EOF
     exit 0
 fi
 
-# Read args from env var
-tool=$(echo "$CHIBI_TOOL_ARGS" | jq -r '.tool // empty')
-url=$(echo "$CHIBI_TOOL_ARGS" | jq -r '.url // empty')
-max_length=$(echo "$CHIBI_TOOL_ARGS" | jq -r '.max_length // empty')
+# Read args from stdin
+ARGS=$(cat /dev/stdin)
+tool=$(echo "$ARGS" | jq -r '.tool // empty')
+url=$(echo "$ARGS" | jq -r '.url // empty')
+max_length=$(echo "$ARGS" | jq -r '.max_length // empty')
 
 if [[ -z "$tool" ]]; then
     echo "Error: 'tool' parameter is required"

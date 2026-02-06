@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::env;
 use std::fs;
-use std::io::Write;
+use std::io::{self, Read, Write};
 use std::path::PathBuf;
 use std::process::{Command, ExitCode};
 
@@ -90,6 +90,17 @@ struct SkillInvocationArgs {
 struct SkillInfo {
     name: String,
     description: String,
+}
+
+// ============================================================================
+// Stdin Helper
+// ============================================================================
+
+/// Read all of stdin into a string (args/hook data are passed via stdin)
+fn read_stdin() -> String {
+    let mut buf = String::new();
+    io::stdin().read_to_string(&mut buf).unwrap_or_default();
+    if buf.is_empty() { "{}".to_string() } else { buf }
 }
 
 // ============================================================================
@@ -388,9 +399,8 @@ fn handle_post_system_prompt_hook() {
     println!("{}", serde_json::to_string(&response).unwrap());
 }
 
-fn handle_pre_tool_hook() {
-    let hook_data_str = env::var("CHIBI_HOOK_DATA").unwrap_or_else(|_| "{}".to_string());
-    let hook_data: PreToolHookData = serde_json::from_str(&hook_data_str).unwrap_or_default();
+fn handle_pre_tool_hook(stdin_data: &str) {
+    let hook_data: PreToolHookData = serde_json::from_str(stdin_data).unwrap_or_default();
 
     let tool_name = hook_data.tool_name.unwrap_or_default();
 
@@ -864,12 +874,12 @@ fn handle_skill_invocation(tool_name: &str, args: SkillInvocationArgs) {
 // Tool Call Router
 // ============================================================================
 
-fn handle_tool_call() {
-    let args_str = env::var("CHIBI_TOOL_ARGS").unwrap_or_else(|_| "{}".to_string());
+fn handle_tool_call(stdin_data: &str) {
+    let args_str = stdin_data;
     let tool_name = env::var("CHIBI_TOOL_NAME").unwrap_or_default();
 
     // Parse args as generic JSON first
-    let args_value: serde_json::Value = serde_json::from_str(&args_str).unwrap_or_default();
+    let args_value: serde_json::Value = serde_json::from_str(args_str).unwrap_or_default();
 
     // Determine tool name if not provided
     let tool_name = if tool_name.is_empty() {
@@ -953,28 +963,24 @@ fn main() -> ExitCode {
 
     // Check if we're being called as a hook
     if let Ok(hook) = env::var("CHIBI_HOOK") {
+        let stdin_data = read_stdin();
         match hook.as_str() {
             "on_start" => handle_on_start_hook(),
             "post_system_prompt" => handle_post_system_prompt_hook(),
-            "pre_tool" => handle_pre_tool_hook(),
+            "pre_tool" => handle_pre_tool_hook(&stdin_data),
             _ => println!("{{}}"),
         }
         return ExitCode::SUCCESS;
     }
 
-    // Check if we're being called as a tool
-    if env::var("CHIBI_TOOL_ARGS").is_ok() {
-        handle_tool_call();
-        return ExitCode::SUCCESS;
-    }
-
-    // CLI mode
+    // CLI mode (must check before tool call since both read stdin)
     if args.len() > 1 {
         handle_cli(&args);
         return ExitCode::SUCCESS;
     }
 
-    println!("Usage: agent-skills --schema | <action> [args...]");
-    println!("Actions: install, remove, search, list, list_installed");
+    // No CLI args and not a hook — this is a tool call (args via stdin)
+    let stdin_data = read_stdin();
+    handle_tool_call(&stdin_data);
     ExitCode::SUCCESS
 }

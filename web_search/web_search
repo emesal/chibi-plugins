@@ -35,8 +35,8 @@ if len(sys.argv) > 1 and sys.argv[1] == "--schema":
     }))
     sys.exit(0)
 
-# Read args from env var
-params = json.loads(os.environ["CHIBI_TOOL_ARGS"])
+# Read args from stdin
+params = json.load(sys.stdin)
 
 query = params.get("query")
 max_results = params.get("max_results", 5)

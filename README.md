@@ -8,9 +8,11 @@ Each plugin lives in its own directory:
 
 ```
 plugins/
+├── agent-skills/     # Agent Skills marketplace (Rust)
 ├── hello_chibi/      # XMPP bridge (Rust)
-├── fetch_url/        # URL fetching (Python)
-├── read_context/     # Cross-context inspection (Python)
+├── file-permission/  # File write confirmation (Python)
+├── web_search/       # Web search (Python)
+├── run_command/      # Shell command execution (bash)
 ├── ...
 ```
 
@@ -18,29 +20,70 @@ plugins/
 
 | Plugin | Language | Description |
 |--------|----------|-------------|
+| `agent-skills` | Rust | Agent Skills marketplace - install/invoke skills from SKILL.md |
 | `hello_chibi` | Rust | XMPP bridge via mcabber - send/receive XMPP messages |
-| `bofh_in_the_shell` | Python | BOFH excuse generator |
-| `coffee-table` | Python | Coffee tracking |
-| `fetch-mcp` | Python | MCP server integration |
-| `fetch_url` | Python | Fetch URL content |
-| `github-mcp` | Python | GitHub MCP integration |
-| `hook-inspector` | Python | Debug hook - logs all hook events |
-| `read_context` | Python | Read another context's state |
-| `read_file` | Python | Read local files |
-| `recurse` | Python | Recursive chibi invocation |
-| `run_command` | Python | Execute shell commands |
-| `sub-agent` | Python | Spawn sub-agent in separate context |
-| `web_search` | Python | Web search |
+| `bofh_in_the_shell` | bash | Execute shell commands without guardrails (joke plugin) |
+| `coffee-table` | Python | Shared inter-context communication space |
+| `fetch-mcp` | bash | MCP server wrapper for URL fetching |
+| `fetch_url` | bash | Fetch URL content via curl |
+| `file-permission` | Python | Prompts for user confirmation on file writes (hook) |
+| `github-mcp` | Python | GitHub MCP integration with tool caching |
+| `hook-inspector` | bash | Debug hook - logs all hook events to file |
+| `read_context` | bash | Read another context's state (read-only) |
+| `read_file` | bash | Read local files |
+| `recurse` | bash | Signal chibi to continue processing |
+| `run_command` | bash | Execute shell commands with confirmation |
+| `sub-agent` | bash | Spawn sub-agent in separate context |
+| `web_search` | Python | Web search via DuckDuckGo |
+
+## Plugin convention
+
+Plugins receive arguments via **stdin** as JSON:
+
+- **Tools**: chibi pipes the tool arguments JSON to stdin.
+- **Hooks**: chibi pipes the hook data JSON to stdin. The `CHIBI_HOOK` env var identifies which hook is firing.
+- **Schema**: called with `--schema` as the first argument; must print JSON schema to stdout.
+
+```python
+# Python example
+if len(sys.argv) > 1 and sys.argv[1] == "--schema":
+    print(json.dumps({...}))
+    sys.exit(0)
+
+if os.environ.get("CHIBI_HOOK"):
+    data = json.load(sys.stdin)  # hook data via stdin
+    print("{}")
+    sys.exit(0)
+
+params = json.load(sys.stdin)  # tool args via stdin
+print("result")
+```
+
+```bash
+# bash example
+if [[ "$1" == "--schema" ]]; then
+    cat <<'EOF'
+{ ... }
+EOF
+    exit 0
+fi
+
+# Read args from stdin
+ARGS=$(cat /dev/stdin)
+value=$(echo "$ARGS" | jq -r '.key')
+```
+
+Plugins that need interactive user input (e.g. confirmation prompts) should read from `/dev/tty` since stdin is used for JSON args.
 
 ## Installation
 
-For single-file Python plugins, symlink or copy the script:
+For single-file plugins, symlink or copy the script:
 
 ```bash
-ln -s /path/to/plugins/fetch_url/fetch_url ~/.chibi/plugins/fetch_url
+ln -s /path/to/plugins/web_search/web_search ~/.chibi/plugins/web_search
 ```
 
-For compiled plugins like `hello_chibi`:
+For compiled plugins like `hello_chibi` or `agent-skills`:
 
 ```bash
 cd hello_chibi

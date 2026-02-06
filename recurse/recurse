@@ -24,6 +24,6 @@ EOF
   exit 0
 fi
 
-# Read args from env var
-note=$(echo "$CHIBI_TOOL_ARGS" | jq -r '.note // ""')
+# Read args from stdin
+note=$(jq -r '.note // ""' < /dev/stdin)
 echo "Continuing: $note"

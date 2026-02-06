@@ -44,9 +44,9 @@ fi
 LOG_FILE="$HOME/.chibi/hook-inspector.log"
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 
-# Get hook type and data from environment
+# Get hook type from environment, data from stdin
 HOOK="${CHIBI_HOOK}"
-DATA="${CHIBI_HOOK_DATA}"
+DATA=$(cat /dev/stdin)
 
 # Create log directory if it doesn't exist
 mkdir -p "$(dirname "$LOG_FILE")"

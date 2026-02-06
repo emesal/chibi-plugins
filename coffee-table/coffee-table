@@ -120,14 +120,13 @@ def post_message(message: str):
     print(f'Posted to coffee-table: "{message}"')
 
 
-# Get hook info from environment
+# Get hook type from environment, data from stdin
 hook = os.environ.get("CHIBI_HOOK", "")
-hook_data_str = os.environ.get("CHIBI_HOOK_DATA", "{}")
 
 try:
-    hook_data = json.loads(hook_data_str)
-except json.JSONDecodeError:
-    hook_data = {}
+    stdin_data = json.load(sys.stdin)
+except (json.JSONDecodeError, ValueError):
+    stdin_data = {}
 
 # Handle on_start hook - create coffee-table context if needed
 if hook == "on_start":
@@ -137,7 +136,7 @@ if hook == "on_start":
 
 # Handle post_system_prompt hook - inject awareness into other contexts
 if hook == "post_system_prompt":
-    context_name = hook_data.get("context_name", "")
+    context_name = stdin_data.get("context_name", "")
 
     # Don't inject into coffee-table itself
     if context_name == COFFEE_TABLE_CONTEXT:
@@ -154,12 +153,12 @@ The coffee-table is a bulletin board visible to all contexts. Use it to leave no
         }))
     sys.exit(0)
 
-# Handle direct tool call - read args from env var
-if "CHIBI_TOOL_ARGS" in os.environ:
-    params = json.loads(os.environ["CHIBI_TOOL_ARGS"])
-    message = params.get("message", "")
-    post_message(message)
-    sys.exit(0)
+# Handle direct tool call - args already read from stdin
+if not hook:
+    message = stdin_data.get("message", "")
+    if message:
+        post_message(message)
+        sys.exit(0)
 
 # No arguments and not a hook - show help
 print("coffee-table: A shared communication space for chibi contexts")

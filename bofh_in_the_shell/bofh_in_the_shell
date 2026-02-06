@@ -33,8 +33,8 @@ EOF
   exit 0
 fi
 
-# Read args from env var
-command=$(echo "$CHIBI_TOOL_ARGS" | jq -r '.command')
+# Read args from stdin
+command=$(jq -r '.command' < /dev/stdin)
 
 if [[ -z "$command" || "$command" == "null" ]]; then
   echo "Error: command parameter is required" >&2

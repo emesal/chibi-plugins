@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::env;
 use std::fs::{self, File, OpenOptions};
-use std::io::{Read, Write};
+use std::io::{self, Read, Write};
 use std::path::PathBuf;
 use std::process::{Command, ExitCode};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -191,6 +191,13 @@ fn write_to_inbox(context: &str, entry: &InboxEntry) -> Result<(), String> {
     Ok(())
 }
 
+/// Read all of stdin into a string (args/hook data are passed via stdin)
+fn read_stdin() -> String {
+    let mut buf = String::new();
+    io::stdin().read_to_string(&mut buf).unwrap_or_default();
+    if buf.is_empty() { "{}".to_string() } else { buf }
+}
+
 /// Output the plugin schema (called with --schema)
 fn print_schema() {
     let schema = serde_json::json!({
@@ -217,7 +224,7 @@ fn print_schema() {
 
 /// Handle pre_send_message hook - intercept messages to xmpp: targets
 fn handle_pre_send_message_hook() -> ExitCode {
-    let hook_data = env::var("CHIBI_HOOK_DATA").unwrap_or_else(|_| "{}".to_string());
+    let hook_data = read_stdin();
 
     let data: SendMessageHookData = match serde_json::from_str(&hook_data) {
         Ok(d) => d,
@@ -354,7 +361,7 @@ fn handle_eventcmd(args: &[String]) -> ExitCode {
 
 /// Handle direct tool call (xmpp_send)
 fn handle_tool_call() -> ExitCode {
-    let args_json = env::var("CHIBI_TOOL_ARGS").unwrap_or_else(|_| "{}".to_string());
+    let args_json = read_stdin();
 
     let args: XmppSendArgs = match serde_json::from_str(&args_json) {
         Ok(a) => a,

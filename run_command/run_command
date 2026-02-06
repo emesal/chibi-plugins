@@ -23,8 +23,8 @@ EOF
   exit 0
 fi
 
-# Read args from env var
-command=$(echo "$CHIBI_TOOL_ARGS" | jq -r '.command')
+# Read args from stdin
+command=$(jq -r '.command' < /dev/stdin)
 
 if [[ -z "$command" || "$command" == "null" ]]; then
   echo "Error: command parameter is required" >&2
@@ -39,7 +39,7 @@ echo "│ Command: $command" >&2
 echo "└─────────────────────────────────────────────────────────────" >&2
 echo -n "Execute this command? [y/N] " >&2
 
-read -r answer
+read -r answer < /dev/tty
 
 if [[ "$answer" != "y" && "$answer" != "Y" ]]; then
   echo "Command cancelled by user" >&2

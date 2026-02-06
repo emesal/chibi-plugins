@@ -22,8 +22,8 @@ EOF
   exit 0
 fi
 
-# Read args from env var
-url=$(echo "$CHIBI_TOOL_ARGS" | jq -r '.url')
+# Read args from stdin
+url=$(jq -r '.url' < /dev/stdin)
 
 if [[ -z "$url" || "$url" == "null" ]]; then
   echo "Error: url parameter is required" >&2

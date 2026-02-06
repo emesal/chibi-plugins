@@ -33,7 +33,7 @@ def main():
         print(json.dumps({"approved": True}))
         return
 
-    hook_data = json.loads(os.environ.get("CHIBI_HOOK_DATA", "{}"))
+    hook_data = json.load(sys.stdin)
     tool_name = hook_data.get("tool_name", "unknown")
     path = hook_data.get("path", "unknown")
 
@@ -50,11 +50,13 @@ def main():
         print(f"find: {find[:100]}", file=sys.stderr)
         print(f"replace: {replace[:100]}\n", file=sys.stderr)
 
-    # prompt for permission
+    # prompt for permission (stdin is used for hook data, read from tty)
     try:
-        response = input("allow this file operation? [y/N]: ").strip().lower()
+        with open("/dev/tty") as tty:
+            print("allow this file operation? [y/N]: ", end="", flush=True, file=sys.stderr)
+            response = tty.readline().strip().lower()
         approved = response == "y"
-    except EOFError:
+    except (EOFError, OSError):
         approved = False
 
     result = {

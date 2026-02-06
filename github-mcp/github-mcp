@@ -28,8 +28,8 @@ Safety:
     By default, destructive operations (delete, create, update) require confirmation.
 
 Usage:
-    github-mcp --schema              # Return tool schema (from cache)
-    echo '{"tool": "...", "arguments": {...}}' | github-mcp  # Call a tool
+    github-mcp --schema                                      # Return tool schema (from cache)
+    echo '{"tool": "...", "arguments": {...}}' | github-mcp  # Call a tool (args via stdin)
     echo '{"refresh_cache": true}' | github-mcp              # Refresh cache
 """
 
@@ -119,12 +119,13 @@ def ask_confirmation(tool_name, arguments):
     print("Execute this action? [y/N] ", file=sys.stderr, end="", flush=True)
 
     try:
-        # Read from stdin (now free since args come via env var)
-        answer = input().strip()
+        # Read from /dev/tty for interactive confirmation (stdin is used for tool args)
+        with open("/dev/tty") as tty:
+            answer = tty.readline().strip()
         return answer.lower() == "y"
-    except EOFError:
-        # No input available - deny by default for safety
-        print("No input available - denying for safety", file=sys.stderr)
+    except (EOFError, OSError):
+        # No terminal available - deny by default for safety
+        print("No terminal available - denying for safety", file=sys.stderr)
         return False
 
 
@@ -335,11 +336,11 @@ def main():
         print(json.dumps(build_schema()))
         return
 
-    # Read args from env var
+    # Read args from stdin
     try:
-        input_data = json.loads(os.environ["CHIBI_TOOL_ARGS"])
-    except (KeyError, json.JSONDecodeError) as e:
-        print(f"Error: Invalid or missing CHIBI_TOOL_ARGS: {e}")
+        input_data = json.load(sys.stdin)
+    except (json.JSONDecodeError, ValueError) as e:
+        print(f"Error: Invalid JSON on stdin: {e}")
         sys.exit(1)
 
     # Handle refresh_cache command

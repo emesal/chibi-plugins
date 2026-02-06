@@ -34,10 +34,11 @@ EOF
   exit 0
 fi
 
-# Read args from env var
-context_name=$(echo "$CHIBI_TOOL_ARGS" | jq -r '.context_name // empty')
-include_messages=$(echo "$CHIBI_TOOL_ARGS" | jq -r '.include_messages // true')
-num_messages=$(echo "$CHIBI_TOOL_ARGS" | jq -r '.num_messages // 5')
+# Read args from stdin
+ARGS=$(cat /dev/stdin)
+context_name=$(echo "$ARGS" | jq -r '.context_name // empty')
+include_messages=$(echo "$ARGS" | jq -r '.include_messages // true')
+num_messages=$(echo "$ARGS" | jq -r '.num_messages // 5')
 
 if [[ -z "$context_name" ]]; then
   echo '{"error": "context_name is required"}'

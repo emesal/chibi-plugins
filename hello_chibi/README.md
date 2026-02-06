@@ -173,7 +173,7 @@ The plugin handles three different invocation patterns:
 | `--schema` | chibi plugin discovery | Returns tool schema and hook registration |
 | `CHIBI_HOOK=pre_send_message` | chibi hook system | Intercepts `xmpp:` targets |
 | `MSG IN jid [file]` | mcabber eventcmd | Processes incoming XMPP messages |
-| `CHIBI_TOOL_ARGS={...}` | Direct tool call | LLM calls `xmpp_send` directly |
+| stdin (JSON) | Direct tool call | LLM calls `xmpp_send` directly |
 
 ## Security notes
 
