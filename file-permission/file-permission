@@ -6,7 +6,7 @@
 """
 File permission handler for chibi.
 
-Prompts user for y/N confirmation on write_file and patch_file operations.
+Prompts user for y/N confirmation on write_file and file_edit operations.
 This is a reference implementation; customise for your own workflows.
 """
 
@@ -38,17 +38,10 @@ def main():
     path = hook_data.get("path", "unknown")
 
     # show info to user (stderr)
-    if tool_name == "write_file":
-        content = hook_data.get("content", "")
-        preview = content[:200] + "..." if len(content) > 200 else content
-        print(f"\n[{tool_name}] {path}", file=sys.stderr)
-        print(f"content preview:\n{preview}\n", file=sys.stderr)
-    else:  # patch_file
-        find = hook_data.get("find", "")
-        replace = hook_data.get("replace", "")
-        print(f"\n[{tool_name}] {path}", file=sys.stderr)
-        print(f"find: {find[:100]}", file=sys.stderr)
-        print(f"replace: {replace[:100]}\n", file=sys.stderr)
+    content = hook_data.get("content", "")
+    preview = content[:200] + "..." if len(content) > 200 else content
+    print(f"\n[{tool_name}] {path}", file=sys.stderr)
+    print(f"content preview:\n{preview}\n", file=sys.stderr)
 
     # prompt for permission (stdin is used for hook data, read from tty)
     try:
