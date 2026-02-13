@@ -217,7 +217,8 @@ fn print_schema() {
             },
             "required": ["to", "message"]
         },
-        "hooks": ["pre_send_message"]
+        "hooks": ["pre_send_message"],
+        "summary_params": ["to"]
     });
     println!("{}", serde_json::to_string(&schema).unwrap());
 }

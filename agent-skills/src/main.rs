@@ -300,7 +300,8 @@ fn generate_schema() -> serde_json::Value {
             },
             "required": ["action"]
         },
-        "hooks": ["post_system_prompt", "pre_tool", "on_start"]
+        "hooks": ["post_system_prompt", "pre_tool", "on_start"],
+        "summary_params": ["action"]
     }));
 
     tools.push(serde_json::json!({
@@ -319,7 +320,8 @@ fn generate_schema() -> serde_json::Value {
                 }
             },
             "required": ["skill", "path"]
-        }
+        },
+        "summary_params": ["skill", "path"]
     }));
 
     tools.push(serde_json::json!({
@@ -347,7 +349,8 @@ fn generate_schema() -> serde_json::Value {
                 }
             },
             "required": ["skill", "script"]
-        }
+        },
+        "summary_params": ["skill", "script"]
     }));
 
     // One tool per installed skill
