@@ -4,10 +4,15 @@
 # dependencies = []
 # ///
 """
-File permission handler for chibi.
+Deny-only security gate for file write operations.
 
-Prompts user for y/N confirmation on write_file and file_edit operations.
-This is a reference implementation; customise for your own workflows.
+Example plugin demonstrating the deny-only permission protocol. Plugins
+return {"denied": true, "reason": "..."} to block an operation, or {}
+(no opinion) to let it fall through to the frontend's default handler
+(e.g. interactive TTY prompt).
+
+This example denies writes to paths outside the project root.
+Customise the deny logic for your own security requirements.
 """
 
 import json
@@ -16,7 +21,7 @@ import sys
 
 SCHEMA = {
     "name": "file_permission",
-    "description": "prompts for permission before file writes",
+    "description": "deny-only security gate for file writes (example plugin)",
     "parameters": {"type": "object", "properties": {}, "required": []},
     "hooks": ["pre_file_write"],
 }
@@ -29,34 +34,24 @@ def main():
 
     hook = os.environ.get("CHIBI_HOOK")
     if hook != "pre_file_write":
-        # not our hook, auto-approve
-        print(json.dumps({"approved": True}))
+        # not our hook — no opinion
+        print("{}")
         return
 
     hook_data = json.load(sys.stdin)
-    tool_name = hook_data.get("tool_name", "unknown")
-    path = hook_data.get("path", "unknown")
+    path = os.path.realpath(hook_data.get("path", ""))
+    project_root = os.environ.get("CHIBI_PROJECT_ROOT", "")
 
-    # show info to user (stderr)
-    content = hook_data.get("content", "")
-    preview = content[:200] + "..." if len(content) > 200 else content
-    print(f"\n[{tool_name}] {path}", file=sys.stderr)
-    print(f"content preview:\n{preview}\n", file=sys.stderr)
+    # deny writes outside the project root (if set)
+    if project_root and not path.startswith(os.path.realpath(project_root)):
+        print(json.dumps({
+            "denied": True,
+            "reason": f"path '{path}' is outside project root '{project_root}'",
+        }))
+        return
 
-    # prompt for permission (stdin is used for hook data, read from tty)
-    try:
-        with open("/dev/tty") as tty:
-            print("allow this file operation? [y/N]: ", end="", flush=True, file=sys.stderr)
-            response = tty.readline().strip().lower()
-        approved = response == "y"
-    except (EOFError, OSError):
-        approved = False
-
-    result = {
-        "approved": approved,
-        "reason": "user approved" if approved else "user denied",
-    }
-    print(json.dumps(result))
+    # no objection — falls through to frontend handler
+    print("{}")
 
 
 if __name__ == "__main__":
