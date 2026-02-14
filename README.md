@@ -12,7 +12,6 @@ plugins/
 ├── hello_chibi/      # XMPP bridge (Rust)
 ├── file-permission/  # File write confirmation (Python)
 ├── web_search/       # Web search (Python)
-├── run_command/      # Shell command execution (bash)
 ├── ...
 ```
 
@@ -21,20 +20,24 @@ plugins/
 | Plugin | Language | Description |
 |--------|----------|-------------|
 | `agent-skills` | Rust | Agent Skills marketplace - install/invoke skills from SKILL.md |
-| `hello_chibi` | Rust | XMPP bridge via mcabber - send/receive XMPP messages |
 | `bofh_in_the_shell` | bash | Execute shell commands without guardrails (joke plugin) |
 | `coffee-table` | Python | Shared inter-context communication space |
-| `fetch-mcp` | bash | MCP server wrapper for URL fetching |
-| `fetch_url` | bash | Fetch URL content via curl |
 | `file-permission` | Python | Prompts for user confirmation on file writes (hook) |
-| `github-mcp` | Python | GitHub MCP integration with tool caching |
+| `hello_chibi` | Rust | XMPP bridge via mcabber - send/receive XMPP messages |
 | `hook-inspector` | bash | Debug hook - logs all hook events to file |
-| `read_context` | bash | Read another context's state (read-only) |
-| `read_file` | bash | Read local files |
-| `recurse` | bash | Signal chibi to continue processing |
-| `run_command` | bash | Execute shell commands with confirmation |
-| `sub-agent` | bash | Spawn sub-agent in separate context |
 | `web_search` | Python | Web search via DuckDuckGo |
+
+### Removed (now builtins)
+
+The following plugins have been superseded by built-in tools in chibi-core:
+
+- `fetch_url` → `fetch_url` builtin
+- `read_context` → `read_context` builtin
+- `read_file` → `file_head`/`file_lines` builtins
+- `run_command` → `shell_exec` builtin + `pre_shell_exec` hook
+- `recurse` → `call_agent` builtin
+- `fetch-mcp` → `fetch_url` builtin
+- `github-mcp` → `gh` CLI via `shell_exec`
 
 ## Plugin convention
 
