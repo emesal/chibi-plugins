@@ -31,7 +31,8 @@ if len(sys.argv) > 1 and sys.argv[1] == "--schema":
                 }
             },
             "required": ["query"]
-        }
+        },
+        "summary_params": ["query"]
     }))
     sys.exit(0)
 
