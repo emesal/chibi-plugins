@@ -25,7 +25,15 @@ plugins/
 | `file-permission` | Python | Prompts for user confirmation on file writes (hook) |
 | `hello_chibi` | Rust | XMPP bridge via mcabber - send/receive XMPP messages |
 | `hook-inspector` | bash | Debug hook - logs all hook events to file |
+| `lang_rust` | Rust | Language plugin: extracts symbols/refs from Rust source files (tree-sitter) |
 | `web_search` | Python | Web search via DuckDuckGo |
+
+### lang_rust quirks
+
+- `tree-sitter-rust` exposes visibility as a `visibility_modifier` child kind, not a named field — `child_by_field_name("visibility")` returns `None`. Use `node.children().find(|n| n.kind() == "visibility_modifier")` instead.
+- `use_wildcard` nodes contain the full path text (e.g. `"std::collections::*"`), not just `"*"` — take the full node text rather than prepending `prefix + "::*"`.
+- Tree-sitter cursor lifetime: `node.children(&mut cursor)` borrows the cursor; collect to `Vec` before `.find()` if you need the result to outlive the cursor borrow.
+- `tree-sitter` and `tree-sitter-rust` must be version-compatible. Current pairing: `tree-sitter = "0.24"`, `tree-sitter-rust = "0.23"` (works as of 2026-03-16).
 
 ### Removed (now builtins)
 
