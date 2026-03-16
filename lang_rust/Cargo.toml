@@ -1,0 +1,11 @@
+[package]
+name = "lang_rust"
+version = "0.1.0"
+edition = "2021"
+description = "Chibi language plugin: extracts symbols and references from Rust source files using tree-sitter"
+
+[dependencies]
+tree-sitter = "0.24"
+tree-sitter-rust = "0.23"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
