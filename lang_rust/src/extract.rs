@@ -28,14 +28,7 @@ pub fn extract(source: &str) -> Output {
 
 /// Body child node kinds excluded from signature text.
 fn is_body_node(kind: &str) -> bool {
-    matches!(
-        kind,
-        "block"
-            | "declaration_list"
-            | "field_declaration_list"
-            | "enum_variant_list"
-            | "ordered_field_declaration_list"
-    ) || kind.ends_with("_list")
+    kind == "block" || kind.ends_with("_list")
 }
 
 /// Extract visibility, defaulting to "private" if no modifier present.
@@ -439,7 +432,7 @@ fn walk_node(node: Node, source: &[u8], output: &mut Output, parent_stack: &mut 
                 let visibility = extract_visibility_default_private(node, source);
                 let signature = node
                     .utf8_text(source)
-                    .map(|s| s.trim().to_string())
+                    .map(|s| s.trim().trim_end_matches(',').trim().to_string())
                     .ok()
                     .filter(|s| !s.is_empty());
                 let parent = parent_stack.last().cloned();
