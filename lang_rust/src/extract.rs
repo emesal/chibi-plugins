@@ -26,19 +26,6 @@ pub fn extract(source: &str) -> Output {
     output
 }
 
-/// Whether this node kind can be a parent (pushed onto the parent stack).
-fn is_parent_kind(kind: &str) -> bool {
-    matches!(
-        kind,
-        "struct_item"
-            | "enum_item"
-            | "union_item"
-            | "trait_item"
-            | "impl_item"
-            | "mod_item"
-    )
-}
-
 /// Body child node kinds excluded from signature text.
 fn is_body_node(kind: &str) -> bool {
     matches!(
@@ -49,21 +36,6 @@ fn is_body_node(kind: &str) -> bool {
             | "enum_variant_list"
             | "ordered_field_declaration_list"
     ) || kind.ends_with("_list")
-}
-
-/// Extract visibility from a node's `visibility_modifier` child.
-/// tree-sitter-rust uses the child kind "visibility_modifier" (not a named field).
-fn extract_visibility(node: Node, source: &[u8]) -> Option<String> {
-    let mut c = node.walk();
-    let children: Vec<_> = node.children(&mut c).collect();
-    let vis = children.iter().find(|n| n.kind() == "visibility_modifier")?;
-    let text = vis.utf8_text(source).unwrap_or("").trim();
-    let vis_str = match text {
-        "pub" => "public",
-        t if t.starts_with("pub(") => t,
-        _ => "private",
-    };
-    Some(vis_str.to_string())
 }
 
 /// Extract visibility, defaulting to "private" if no modifier present.

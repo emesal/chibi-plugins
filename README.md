@@ -25,6 +25,7 @@ plugins/
 | `file-permission` | Python | Prompts for user confirmation on file writes (hook) |
 | `hello_chibi` | Rust | XMPP bridge via mcabber - send/receive XMPP messages |
 | `hook-inspector` | bash | Debug hook - logs all hook events to file |
+| `lang_rust` | Rust | Language plugin: extracts symbols/refs from Rust source files (tree-sitter) |
 | `web_search` | Python | Web search via DuckDuckGo |
 
 ### Removed (now builtins)

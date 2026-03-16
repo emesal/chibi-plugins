@@ -13,8 +13,9 @@ pub struct Input {
 
 /// A single file to extract symbols from.
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct FileEntry {
-    pub path: String,
+    pub path: String,    // part of protocol contract; not used by extractor
     pub content: String,
 }
 
